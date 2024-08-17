@@ -189,7 +189,7 @@ begin
   Writeln('---------');
   for I := -10 to 10 do
   begin
-    Writeln(Sar(I,1):3, ' |', I div 2:3);
+    Writeln(Sar(I, 1):3, ' |', I div 2:3);
   end;
   Readln;
 end.
