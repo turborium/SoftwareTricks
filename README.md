@@ -8,7 +8,7 @@
 **Идея: Ветвления это дорого(медленно)**  
 
 Наивная реализация:
-```
+```Pascal
 function Sign(X: Integer): Integer;
 begin
   if X = 0 then
@@ -20,14 +20,14 @@ begin
 end;
 ```
 Версия основанная на трюке в виде того, что при приведении Boolean к Integer мы получим 1 для True и 0 для False:
-```
+```Pascal
 function Sign(X: Integer): Integer;
 begin
   Result := Integer(X > 0) - Integer(X < 0);
 end;
 ```
 Сравнение дизассемблера (FPC, O2):
-```
+```Pascal
 ; Наивная реализация:
 sign(longint):
         testl   %edi,%edi
@@ -55,7 +55,7 @@ sign(longint):
         ret
 ```
 Можно использовать и для сравнения чисел, например так:
-```
+```Pascal
 function Compare(A, B: Integer): Integer;
 begin
   Result := Integer(A > B) - Integer(A < B);
@@ -73,7 +73,7 @@ Although the Microsoft C++ compiler uses the sign bit to fill vacated bit positi
 there is no guarantee that other implementations also do so.
 ```
 Более того, для отрицательных чисел ```>>``` и ```/``` НЕ ЭКВИВАЛЕНТНЫ:
-```
+```C
 #include <stdio.h>
 
 int main() 
@@ -88,7 +88,7 @@ int main()
 Можете передать привет, советчикам по "оптимизации", с их крутыми советами из 70-х.  
 
 Тем не менее, иногда надо портировать "оптимизированный" код 1 в 1, с сохранением этого поведения, ниже представленны несколько эквивалентов ```>>(sar)``` с расширемем знака для 32-х битных чисел, для сред и языков, где сдвиг - всегда беззнаковый.
-```
+```Pascal
 function Sar(Number: Integer; Shift: Integer): Integer; inline;
 var
   Mask: Integer;
@@ -100,7 +100,7 @@ begin
   Result := (Number shr Shift) or (Mask shl (SizeOf(Integer) * 8 - Shift));
 end;
 ```
-```
+```Pascal
 function Sar(Number: Integer; Shift: Integer): Integer; inline;
 var
   SignMask, ShiftMask: Integer;
@@ -113,7 +113,7 @@ begin
   Result := (Number shr Shift) or ((SignMask and ShiftMask) shl (SizeOf(Integer) * 8 - Shift));
 end;
 ```
-```
+```Pascal
 function Sar(Number: Integer; Shift: Integer): Integer; inline;
 begin
   if Shift = 0 then
@@ -127,7 +127,7 @@ begin
   end;
 end;
 ```
-```
+```Pascal
 function Sar(Number: Integer; Shift: Integer): Integer; inline;
 const
   SignMasks: array[0..1] of Cardinal = (0, $FFFFFFFF);
@@ -149,7 +149,7 @@ begin
 end;
 ```
 Ну и конечно-же, никто не мешает вам, просто вызывать ассемблерный код с операцией ```SAR```(http://www.club155.ru/x86cmd/SAR):
-```
+```Pascal
 function Sar(Number: Integer; Shift: Integer): Integer;
 asm
   {$IFDEF CPUX64}
@@ -162,5 +162,63 @@ asm
   {$ENDIF}
 end;
 ```
-Вывод: критически относитесь к советам об оптимизации, особенно к древним "трюкам" времен PDP-11.
+Отображение разницы:
+```Pascal
+program Test;
+
+{$APPTYPE CONSOLE}
+{$R *.res}
+
+function Sar(Number: Integer; Shift: Integer): Integer; inline;
+begin
+  if Shift = 0 then
+    Result := Number
+  else
+  begin
+    if Number < 0 then
+      Result := (Number shr Shift) or ((not 0) shl (SizeOf(Integer) * 8 - Shift))
+    else
+      Result := Number shr Shift;
+  end;
+end;
+
+var
+  I: Integer;
+begin
+  Writeln('sar | div');
+  Writeln('---------');
+  for I := -10 to 10 do
+  begin
+    Writeln(Sar(I,1):3, ' |', I div 2:3);
+  end;
+  Readln;
+end.
+```
+```
+sar | div
+---------
+ -5 | -5
+ -5 | -4
+ -4 | -4
+ -4 | -3
+ -3 | -3
+ -3 | -2
+ -2 | -2
+ -2 | -1
+ -1 | -1
+ -1 |  0
+  0 |  0
+  0 |  0
+  1 |  1
+  1 |  1
+  2 |  2
+  2 |  2
+  3 |  3
+  3 |  3
+  4 |  4
+  4 |  4
+  5 |  5
+```
+Вывод: критически относитесь к советам об оптимизации, особенно к древним "трюкам" времен PDP-11.  
+Перед "оптимизацией" деления знаковых чисел, убедитесь что вам точно подойдет ```sar``` вместо настоящего деления.  
 
