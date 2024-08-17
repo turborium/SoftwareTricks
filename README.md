@@ -148,7 +148,7 @@ begin
   Result := (Number shr Shift) or (SignMask and ShiftMask);
 end;
 ```
-Ну и конечно-же никто не мешает вам просто вызывать ассемблерный код с операцией ```SAR```(http://www.club155.ru/x86cmd/SAR):
+Ну и конечно-же, никто не мешает вам, просто вызывать ассемблерный код с операцией ```SAR```(http://www.club155.ru/x86cmd/SAR):
 ```
 function Sar(Number: Integer; Shift: Integer): Integer;
 asm
