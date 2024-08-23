@@ -166,9 +166,6 @@ end;
 ```Pascal
 program Test;
 
-{$APPTYPE CONSOLE}
-{$R *.res}
-
 function Sar(Number: Integer; Shift: Integer): Integer; inline;
 begin
   if Shift = 0 then
@@ -218,6 +215,68 @@ sar | div
   4 |  4
   4 |  4
   5 |  5
+```
+Еще один пример - показывающий "несимметричность" нуля, при "оптимизации" FixedPoint:
+```Pascal
+program Project12;
+
+uses
+  SysUtils;
+
+function Sar(Number: Integer; Shift: Integer): Integer; inline;
+begin
+  if Shift = 0 then
+    Result := Number
+  else
+  begin
+    if Number < 0 then
+      Result := (Number shr Shift) or ((not 0) shl (SizeOf(Integer) * 8 - Shift))
+    else
+      Result := Number shr Shift;
+  end;
+end;
+
+var
+  I: Integer;
+begin
+  Writeln('   I       I / 4     I >> 2 ');
+  Writeln('------------------------------');
+  for I := -10 to 10 do
+  begin
+    Write(I:4, ': ', I div 4:8, ' ', Sar(I, 2):10);
+    if I = 0 then
+      Writeln(' <--')
+    else
+      Writeln;
+  end;
+
+  Readln;
+end.
+```
+```
+   I       I / 4     I >> 2
+------------------------------
+ -10:       -2         -3
+  -9:       -2         -3
+  -8:       -2         -2
+  -7:       -1         -2
+  -6:       -1         -2
+  -5:       -1         -2
+  -4:       -1         -1
+  -3:        0         -1
+  -2:        0         -1
+  -1:        0         -1
+   0:        0          0 <--
+   1:        0          0
+   2:        0          0
+   3:        0          0
+   4:        1          1
+   5:        1          1
+   6:        1          1
+   7:        1          1
+   8:        2          2
+   9:        2          2
+  10:        2          2
 ```
 Вывод: 
 1) Критически относитесь к советам об оптимизации, особенно к древним "трюкам" времен PDP-11.  
