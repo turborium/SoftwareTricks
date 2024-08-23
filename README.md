@@ -218,7 +218,7 @@ sar | div
 ```
 Еще один пример - показывающий "несимметричность" нуля, при "оптимизации" FixedPoint:
 ```Pascal
-program Project12;
+program Test;
 
 uses
   SysUtils;
